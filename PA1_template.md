@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 Author: Anthony Trivelli
 
 ## Background
@@ -22,16 +17,14 @@ It is now possible to collect a large amount of data about personal movement usi
         of 17,568 observations in this dataset.
 
 ## Loading and preprocessing the data
-```{r}
+
+```r
 ## Read in Raw file
 act <- read.csv("activity.csv", header= TRUE)
-
 ```
 
-```{r eval= FALSE}
 
-
-
+```r
 ## show Structure of file
 str(act)
 
@@ -44,60 +37,55 @@ summary(act)
 ```
 
 
-```{r}
 
-
-
-
+```r
 # format for use
 act2 <- mutate(act, ddate= as.Date(act$date))
-
 ```
 
 
 
 ## What is mean total number of steps taken per day?
 
-```{r}
 
+```r
 ## Calculate the total number of steps per day
 stepsperday <- ddply( act2, .(ddate), summarize, sum= sum(steps) )
 
 ## Plot histogram
 hist(stepsperday$sum, main="Histogram of Number of Steps per Day", 
      xlab=" # of Steps per Day")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)
 
+```r
 ## Now calculate the mean and median number of steps across all days
 meanNumSteps <- mean(stepsperday$sum, na.rm=TRUE)
 
 medianNumSteps <- median(stepsperday$sum, na.rm=TRUE)
-
 ```
 
-#### The mean number of steps per day is `r sprintf("%5.1f",meanNumSteps) `
-#### The median number of steps per day is `r sprintf("%5.1f",medianNumSteps)`
+#### The mean number of steps per day is 10766.2
+#### The median number of steps per day is 10765.0
 
 ## What is the average daily activity pattern?
 
 ### Prepare data by interval
 
-```{r}
 
-
+```r
 ##Calc. average steps per interval across all days
 avgPerInterval <- ddply( act2, .(interval), summarize, avg= mean(steps,na.rm= TRUE) )
 
 ##Determine which interval has the largest average # of steps for later use in graph
 maxInterval<- avgPerInterval[ avgPerInterval$avg== max(avgPerInterval$avg), ]
-
-
 ```
 
 ### Now plot the Time Series Plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r}
 
+```r
 plot( avgPerInterval$interval, avgPerInterval$avg, type= "l", 
       main= "Avg. # Steps per Interval Across All Days", 
       xlab= "Interval", ylab="Avg. # of Steps" )
@@ -107,15 +95,16 @@ anno <- paste( "Max. avg. # of Steps \n per Interval Across all Days\n is at int
                as.character(maxInterval$interval))
 
 text(c(1700),c(170),labels=c(anno), col= "red")
-
 ```
 
-#### The  `r maxInterval$interval` Interval has the largest average number of steps consisting of `r sprintf("%3.1f", max(avgPerInterval$avg))` steps
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)
+
+#### The  835 Interval has the largest average number of steps consisting of 206.2 steps
 
 ## Imputing missing values
 
-```{r}
 
+```r
 ## Understand the NAs in the data
 
 NAsperday <- ddply( act2, .(ddate), summarize, cnt= sum(is.na(steps)) )
@@ -130,12 +119,13 @@ act2Fixed = act2                       # make a copy of act2
 ```
 #### Setup an estimated steps column with the average steps per interval
 ####      this can probably be combined with subsequent steps but it would be nice to see for traceability
-```{r}
 
+```r
 act2Fixed$eststeps <- rep( avgPerInterval$avg, length( unique(act2$ddate)))
 ```
 #### Determine which observations have NA steps
-```{r}
+
+```r
 # Create logical vector that denotes those observations that have NA steps
 bad <- is.na(act2Fixed$steps )  
 
@@ -146,22 +136,35 @@ act2Fixed$steps[bad] <-  act2Fixed$eststeps[bad]
 ## Re-calculate the total number of steps per day withe the NAs addressed
 fixedstepsperday <- ddply( act2Fixed, .(ddate), summarize, sum= sum(steps) )
 mean(fixedstepsperday$sum)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(fixedstepsperday$sum)
+```
 
+```
+## [1] 10766.19
+```
 
-
+```r
 hist(fixedstepsperday$sum, main="Histogram of Number of Steps per Day with NAs Addressed", 
      xlab=" # of Steps per Day")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)
 
 ### Results:
 The histogram with the NAs replaced with the overall average for that interval across all days did not differ that much from the histogram with the NAs in place
 
 This is also confirmed when we compare the mean and median number of steps across all days, pre and post fixing the NAs
 
-##### The mean steps(with NAs) per day `r sprintf("%5.3f",meanNumSteps)` are virtually identical to the mean steps(NAs replaced) per day `r sprintf("%5.3f", mean(fixedstepsperday$sum))`
+##### The mean steps(with NAs) per day 10766.189 are virtually identical to the mean steps(NAs replaced) per day 10766.189
 
-##### The median steps(with NAs) per day `r sprintf("%5.3f",medianNumSteps)` are virtually identical to the median steps(NAs replaced) per day `r sprintf("%5.3f", median(fixedstepsperday$sum))`
+##### The median steps(with NAs) per day 10765.000 are virtually identical to the median steps(NAs replaced) per day 10766.189
 
 It should also be noted in the case of the fixed NAs, the mean and median Number of steps 
 have coalesced to a single figure
@@ -173,7 +176,8 @@ have coalesced to a single figure
 
 ### Prepare the data for Weekday to Weekend Analysis
 
-```{r}
+
+```r
 ## Determine which days are weekdays vs weekend dayus
 weekendLogVector<- weekdays(act2Fixed$ddate) %in% c("Saturday", "Sunday")
 tempFactor <- act2Fixed$ddate
@@ -190,8 +194,9 @@ avgFixedPerInterval <- ddply( act2Fixed, .(DayType, interval), summarize, avg= m
 xyplot( avg~interval | DayType, data= avgFixedPerInterval, type= "l", layout= c(1,2),
         main= "Comparison of Weekday vs. Weekend Avg. Number of Steps per Interval",
         xlab= "Time of day Interval", ylab="Avg. # of Steps" )
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)
 
 ### Please note the following observations in the Weekday to Weekend comparison
 - Step activity is depressed during working hours on weekdays
